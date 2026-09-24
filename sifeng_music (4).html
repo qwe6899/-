@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抖音司凤音乐 · AI歌声精选</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0a0a12;
+      color: #eee;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    header {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+    header h1 {
+      font-size: 28px;
+      background: linear-gradient(90deg, #ff6b8a, #c44dff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    header p { color: #888; font-size: 14px; }
+    .tag {
+      display: inline-block;
+      background: #e94560;
+      color: #fff;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .song-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+    .song-card {
+      background: #16162a;
+      border-radius: 12px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .song-card:hover, .song-card.active {
+      border-color: #e94560;
+      background: #1c1c36;
+      transform: translateY(-1px);
+    }
+    .num {
+      font-size: 22px;
+      font-weight: 700;
+      color: #e94560;
+      width: 36px;
+      flex-shrink: 0;
+    }
+    .info { flex: 1; min-width: 0; }
+    .info h3 { font-size: 16px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .info .sub { font-size: 12px; color: #888; }
+    .play-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #e94560;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .play-btn:hover { background: #ff6b8a; }
+    .detail {
+      display: none;
+      background: #12122a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+      border: 1px solid #2a2a4a;
+    }
+    .detail.show { display: block; }
+    .detail h2 { font-size: 20px; margin-bottom: 8px; }
+    .detail .meta { color: #aaa; font-size: 13px; margin-bottom: 14px; }
+    .detail .desc { line-height: 1.7; font-size: 14px; color: #ccc; margin-bottom: 16px; }
+    .links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .links a {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-decoration: none;
+      color: #fff;
+      background: #333;
+      transition: background 0.2s;
+    }
+    .links a:hover { background: #e94560; }
+    .links a.douyin { background: #000; border: 1px solid #333; }
+    .links a.bili { background: #fb7299; }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #555;
+      font-size: 12px;
+      padding-bottom: 30px;
+    }
+    .player-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #16162a;
+      border-top: 1px solid #2a2a4a;
+      padding: 12px 20px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+    }
+    .player-bar.show { display: flex; }
+    .player-bar .now { flex: 1; font-size: 14px; }
+    .player-bar .now small { display: block; color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>抖音司凤音乐</h1>
+      <p>AI歌声精选 · 5首热门（含超火《雨爱》司凤版）</p>
+    </header>
+
+    <div class="song-list" id="list"></div>
+
+    <div class="detail" id="detail">
+      <h2 id="d-title"></h2>
+      <div class="meta" id="d-meta"></div>
+      <div class="desc" id="d-desc"></div>
+      <div class="links" id="d-links"></div>
+    </div>
+
+    <footer>
+      数据来自抖音 / B站热门二创 · 仅供欣赏参考<br>
+      点击卡片查看详情 · 去平台搜对应关键词即可找到原视频
+    </footer>
+  </div>
+
+  <div class="player-bar" id="player">
+    <button class="play-btn" onclick="togglePlay()">▶</button>
+    <div class="now">
+      <span id="p-title">-</span>
+      <small id="p-sub">点击上方歌曲开始</small>
+    </div>
+  </div>
+
+  <script>
+    const songs = [
+      {
+        id: 1,
+        title: "雨爱 · 司凤版",
+        sub: "杨丞琳原唱 · AI司凤翻唱",
+        hot: true,
+        desc: "抖音上超火的那首！司凤AI歌声翻唱《雨爱》，温柔空灵又带点戏感。评论区清一色「这嗓子太司凤了」「听完直接破防」。很多视频用它做雨天、emo、新宿决战类二创BGM。",
+        douyin: "https://www.douyin.com/search/%E5%8F%B8%E5%87%A4%20%E9%9B%A8%E7%88%B1",
+        bili: "https://search.bilibili.com/all?keyword=%E5%8F%B8%E5%87%A4%20%E9%9B%A8%E7%88%B1"
+      },
+      {
+        id: 2,
+        title: "Color Your Night · 司凤版",
+        sub: "女神异闻录3 Reload · P系列",
+        desc: "Persona粉丝圈最爱的司凤翻唱之一。夜晚氛围感拉满，很多P3R二创、混剪都在用这个版本。B站相关视频播放量很高。",
+        douyin: "https://www.douyin.com/search/%E5%8F%B8%E5%87%A4%20Color%20Your%20Night",
+        bili: "https://search.bilibili.com/all?keyword=%E5%8F%B8%E5%87%A4%20Color%20Your%20Night"
+      },
+      {
+        id: 3,
+        title: "Life Will Change · 司凤版",
+        sub: "女神异闻录5 · 高燃战斗曲",
+        desc: "原曲是P5高燃战斗BGM，司凤版唱出另一种空灵张力，适合做混剪和战斗二创。司凤音乐合集里的常驻曲目。",
+        douyin: "https://www.douyin.com/search/%E5%8F%B8%E5%87%A4%20Life%20Will%20Change",
+        bili: "https://search.bilibili.com/all?keyword=%E5%8F%B8%E5%87%A4%20Life%20Will%20Change"
+      },
+      {
+        id: 4,
+        title: "Changing Seasons · 司凤版",
+        sub: "女神异闻录系列 · 抒情向",
+        desc: "温柔慢版司凤演绎，适合雨天、夜晚氛围视频。和《雨爱》有异曲同工的情绪感，听感很治愈。",
+        douyin: "https://www.douyin.com/search/%E5%8F%B8%E5%87%A4%20Changing%20Seasons",
+        bili: "https://search.bilibili.com/all?keyword=%E5%8F%B8%E5%87%A4%20Changing%20Seasons"
+      },
+      {
+        id: 5,
+        title: "Shadow World · 司凤版",
+        sub: "女神异闻录4 · 经典曲目",
+        desc: "司凤音乐大合集里的常客。独特的AI声线把暗黑氛围唱出了新味道，适合暗黑系、战斗混剪。",
+        douyin: "https://www.douyin.com/search/%E5%8F%B8%E5%87%A4%20Shadow%20World",
+        bili: "https://search.bilibili.com/all?keyword=%E5%8F%B8%E5%87%A4%20Shadow%20World"
+      }
+    ];
+
+    const listEl = document.getElementById("list");
+    const detailEl = document.getElementById("detail");
+    const playerEl = document.getElementById("player");
+    let current = null;
+
+    songs.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "song-card";
+      card.innerHTML = `
+        <div class="num">${String(s.id).padStart(2, "0")}</div>
+        <div class="info">
+          <h3>${s.title}${s.hot ? '<span class="tag">超火</span>' : ""}</h3>
+          <div class="sub">${s.sub}</div>
+        </div>
+        <button class="play-btn" data-id="${s.id}">▶</button>
+      `;
+      card.addEventListener("click", (e) => {
+        if (e.target.classList.contains("play-btn")) {
+          selectSong(s, true);
+        } else {
+          selectSong(s, false);
+        }
+      });
+      listEl.appendChild(card);
+    });
+
+    function selectSong(s, play) {
+      current = s;
+      document.querySelectorAll(".song-card").forEach(c => c.classList.remove("active"));
+      listEl.children[s.id - 1].classList.add("active");
+
+      document.getElementById("d-title").textContent = s.title;
+      document.getElementById("d-meta").textContent = s.sub;
+      document.getElementById("d-desc").textContent = s.desc;
+      document.getElementById("d-links").innerHTML = `
+        <a class="douyin" href="${s.douyin}" target="_blank">去抖音搜</a>
+        <a class="bili" href="${s.bili}" target="_blank">去B站搜</a>
+      `;
+      detailEl.classList.add("show");
+
+      document.getElementById("p-title").textContent = s.title;
+      document.getElementById("p-sub").textContent = s.sub + " · 请去平台听原视频";
+      playerEl.classList.add("show");
+
+      if (play) {
+        // 模拟播放提示
+        alert("真实音频在平台版权限制下无法直接嵌入。\n请点击下方「去抖音搜」或「去B站搜」听原版～");
+      }
+    }
+
+    function togglePlay() {
+      if (!current) return;
+      alert("请点击「去抖音搜」或「去B站搜」听完整版司凤歌声～");
+    }
+  </script>
+</body>
+</html>
